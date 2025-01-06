@@ -1,0 +1,146 @@
+html{
+    font-size: 62.5%;
+}
+
+body{
+    margin:0;
+    padding: 0;
+    display:flex;
+    justify-content:center;
+}
+.container{
+
+	width: 95vw;
+	max-width: 500px;
+	height: 95vh;
+}
+#chat,#set_username{
+
+    margin-top: 5rem;
+    display:flex;
+    flex-direction:column;
+    height: 90vh;
+	overflow-y: auto;
+
+}
+#chat{
+	display: none;
+}
+.msg{
+    color:blueviolet;
+    font-size: 2rem;
+	position: absolute;
+	top: 5px;
+}
+.msgCtn:nth-child(even){
+	background-color: darkcyan;
+}
+
+
+.msgCtn{
+    margin: 1rem 0;
+    color: white;
+    padding: 1rem 1rem;
+    background-color: blueviolet;
+    border-radius: 6px;
+    font-size: 2rem
+}
+.msgForm{
+    display:flex;
+    flex-direction:row;
+}
+.input{
+    height: 100%;
+    flex: 4;
+    margin-right: 2rem;
+    border:none;
+    border-radius: .5rem;
+    padding: 2px 1rem;
+    font-size: 1.5rem;
+    background-color:aliceblue;
+}
+
+.input:focus{
+    background-color:white;
+}
+
+.btn{
+    height:5rem;
+    flex: 1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    border-radius: .5rem;
+    background-color:blueviolet;
+    color: whitesmoke;
+    border:none;
+    font-size: 1.6rem;
+	margin: 0 5px 0 0;
+}
+.btn[type="reset"]{
+	background-color: crimson;
+}
+
+#privateKeyInput {
+    height: 100px;
+    resize: vertical;
+    margin: 10px 0;
+}
+
+#encryption-controls {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: aliceblue;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#encryption-controls label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 1.4rem;
+    color: #333;
+    cursor: pointer;
+}
+
+#encryption-controls input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+#recipientSelect {
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 1.4rem;
+    background-color: white;
+}
+
+#recipientSelect:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.status-message {
+    font-size: 1.4rem;
+    padding: 5px;
+    border-radius: 3px;
+    margin: 5px 0;
+}
+
+.status-message.error {
+    background-color: #ffebee;
+    color: crimson;
+}
+
+.status-message.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}

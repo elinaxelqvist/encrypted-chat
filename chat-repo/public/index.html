@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="index.css">
+	<title>Tiny ws chat</title>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="./js/jsencrypt.min.js"></script>
+	<script src="./js/script.js?v=8" defer></script>
+</head>
+
+<body>
+	<div class="container">
+		<div id="set_username">
+			<form id="userForm" class="msgForm">
+				<input type="text" placeholder="Username" class="input" id="userinputBox" />
+				<textarea placeholder="Your Private Key (optional)" class="input" id="privateKeyInput"></textarea>
+				<div id="keyStatus" class="status-message"></div>
+				<input type="submit" class="btn" value="Register">
+			</form>
+		</div>
+		<div id="chat">
+			<p class="msg">Messages:</p>
+			<div id="messages" class="messages"></div>
+			<div id="encryption-controls">
+				<select id="recipientSelect" class="input">
+					<option value="">Select recipient (for encryption)</option>
+				</select>
+				<div id="keyFetchStatus" class="status-message"></div>
+				<label>
+					<input type="checkbox" id="encryptMessage"> Encrypt message
+				</label>
+			</div>
+			<form id="msgForm" class="msgForm">
+				<input type="text" placeholder="Send message" class="input" id="messageinputBox" />
+				<input type="submit" class="btn" value="Send">
+				<button type="reset" class="btn">Leave chat</button>
+			</form>
+		</div>
+	</div>
+
+
+</body>
+
+</html>

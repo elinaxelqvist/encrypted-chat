@@ -1,0 +1,27 @@
+{
+  "name": "ibs_rest",
+  "version": "1.0.0",
+  "description": "REST",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "RESTful",
+    "API",
+    "Posts"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "binding": "^3.0.3",
+    "body-parser": "^1.15.2",
+    "cors": "^2.8.5",
+    "express": "^4.14.0",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "morgan": "^1.7.0"
+  }
+}
