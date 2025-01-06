@@ -15,7 +15,7 @@ wss.on("connection", (client) => {
     let msg = JSON.parse(json);
     if (msg.hasOwnProperty("username")) {
       if (msg.username.trim().length == 0) {
-        client.username = "user_" + ++count; //Tilldelar klienten ett generiskt username (mha en counter) om inget anges
+        client.username = "user_" + ++count;
       } else {
         client.username = msg.username;
       }
