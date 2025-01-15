@@ -8,7 +8,7 @@
 	<title>Tiny ws chat</title>
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script src="./js/jsencrypt.min.js"></script>
-	<script src="./js/script.js?v=8" defer></script>
+	<script src="./js/script.js" defer></script>
 </head>
 
 <body>
@@ -24,6 +24,9 @@
 		<div id="chat">
 			<p class="msg">Messages:</p>
 			<div id="messages" class="messages"></div>
+			<div id="recipients-container" class="recipients-container">
+				<h3>Available Recipients</h3>
+			</div>
 			<div id="encryption-controls">
 				<select id="recipientSelect" class="input">
 					<option value="">Select recipient (for encryption)</option>

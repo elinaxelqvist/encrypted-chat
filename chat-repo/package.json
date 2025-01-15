@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "serve-handler": "file:./node_modules/serve-handler",
-    "ws": "file:./node_modules/ws"
+    "serve-handler": "^6.1.5",
+    "ws": "^8.14.2"
   }
 }

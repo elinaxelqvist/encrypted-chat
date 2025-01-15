@@ -1,5 +1,5 @@
 const ws = new WebSocket(`ws://${window.document.location.host}`);
-const KEY_SERVER = 'http://localhost:8888'; // Adjust this to match your key server port
+const KEY_SERVER = 'http://localhost:8081'; // Key server port
 let crypt = new JSEncrypt();
 let privateKey = null;
 let publicKeys = {};
@@ -112,20 +112,54 @@ ws.onclose = function () {
 ws.onmessage = function (message) {
     console.log("Received WebSocket message:", message.data);
     
+    // Create message div first
     const msgDiv = document.createElement("div");
     msgDiv.classList.add("msgCtn");
-
-    var json = JSON.parse(message.data);
+    
+    const json = JSON.parse(message.data);
     console.log("Parsed message:", json);
 
-    // Try to decrypt if message is encrypted (either by flag or content pattern) and we have a private key
+    // Handle user list updates from WebSocket
+    if (json.type === 'userList') {
+        console.log("Received updated user list:", json.users);
+        // Update both the checkbox list and dropdown
+        updateRecipientsList(json.users);
+        
+        // Also fetch updated public keys when user list changes
+        fetchPublicKeys().then(() => {
+            console.log("Public keys updated after user list change");
+            // Update the dropdown with all available recipients
+            const select = document.getElementById('recipientSelect');
+            const selectedValue = select.value; // Save current selection
+            
+            select.innerHTML = '<option value="">Select recipient (for encryption)</option>';
+            Object.keys(publicKeys).forEach(username => {
+                if (username !== myUsername) {  // Don't add ourselves
+                    const option = document.createElement('option');
+                    option.value = username;
+                    option.textContent = username;
+                    select.appendChild(option);
+                }
+            });
+            
+            // Restore previous selection if still valid
+            if (selectedValue && publicKeys[selectedValue]) {
+                select.value = selectedValue;
+            }
+        }).catch(error => {
+            console.error("Error updating public keys:", error);
+        });
+        return;
+    }
+
+    // Try to decrypt if message is explicitly marked as encrypted and we have a private key
     let displayMessage = json.message;
-    const looksEncrypted = json.encrypted || (json.message && json.message.match(/^[A-Za-z0-9+/=]+$/));
+    // Only treat as encrypted if explicitly marked as encrypted
+    const isEncrypted = json.encrypted === true;
     
-    if (looksEncrypted && privateKey) {
-        console.log("Message appears to be encrypted, attempting to decrypt");
+    if (isEncrypted && privateKey) {
+        console.log("Message is marked as encrypted, attempting to decrypt");
         try {
-            // Create new instance for decryption
             const decryptor = new JSEncrypt();
             decryptor.setPrivateKey(privateKey);
             console.log("Private key set, attempting decryption");
@@ -144,9 +178,11 @@ ws.onmessage = function (message) {
             console.error("Message decryption error:", error);
             displayMessage = '[Encrypted message - decryption failed]';
         }
-    } else if (looksEncrypted) {
+    } else if (isEncrypted) {
         console.log("Encrypted message received but no private key available");
         displayMessage = '[Encrypted message - no private key]';
+    } else {
+        console.log("Regular unencrypted message received");
     }
 
     msgDiv.textContent = `${json.username}: ${displayMessage}`;
@@ -167,44 +203,58 @@ const msgform = document.getElementById("msgForm");
 // Store our own username when we join
 let myUsername = '';
 
-userform.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const username = userform.querySelector("#userinputBox").value;
-    console.log("Registering user:", username);
-    myUsername = username;
+userform.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const username = document.getElementById('userinputBox').value;
+    myUsername = username;  // Store username
+    
+    // Store private key if provided
     const keyInput = document.getElementById('privateKeyInput').value;
-
     if (keyInput.trim()) {
         console.log("Private key provided, normalizing and storing");
         privateKey = normalizeKey(keyInput);
         console.log("Private key stored, length:", privateKey.length);
-        console.log("Private key header:", privateKey.split('\n')[0]);
     } else {
         console.log("No private key provided");
+        privateKey = null;
     }
-
-    let user = { username };
-    console.log("Sending registration to chat server:", user);
-    ws.send(JSON.stringify(user));
+    
+    // Send username to server
+    ws.send(JSON.stringify({ username: username }));
     
     // Hide registration form and show chat
-    user_div.style.display = "none";
-    chat_div.style.display = "flex";
+    document.getElementById('set_username').style.display = 'none';
+    document.getElementById('chat').style.display = 'block';
     
-    // Initialize encryption controls
-    const encryptionControls = document.getElementById('encryption-controls');
-    const recipientSelect = document.getElementById('recipientSelect');
-    const encryptCheckbox = document.getElementById('encryptMessage');
-    
-    if (privateKey) {
-        console.log("Private key available, enabling encryption controls");
-        encryptionControls.style.display = "flex";
-        recipientSelect.disabled = false;  // Always enable recipient selection
-        encryptCheckbox.disabled = false;
-    } else {
-        console.log("No private key, hiding encryption controls");
-        encryptionControls.style.display = "none";
-        encryptCheckbox.disabled = true;
+    // Fetch public keys immediately after registration
+    try {
+        console.log("Fetching public keys after registration");
+        const url = `${KEY_SERVER}/api/pubkeys`;
+        const response = await fetch(url);
+        const keys = await response.json();
+        
+        if (keys && Array.isArray(keys)) {
+            console.log(`Processing ${keys.length} public keys, my username is: ${username}`);
+            keys.forEach(key => {
+                if (key.username !== username) {
+                    console.log('Adding key for ' + key.username + ':', key.publicKey);
+                    publicKeys[key.username] = key.publicKey;
+                }
+            });
+        }
+        
+        // Update the UI
+        const select = document.getElementById('recipientSelect');
+        select.innerHTML = '<option value="">Select recipient (for encryption)</option>';
+        Object.keys(publicKeys).forEach(username => {
+            const option = document.createElement('option');
+            option.value = username;
+            option.textContent = username;
+            select.appendChild(option);
+        });
+        
+    } catch (error) {
+        console.error('Error fetching public keys:', error);
     }
 });
 
@@ -215,12 +265,15 @@ document.getElementById('encryptMessage').addEventListener('change', async (even
     
     if (event.target.checked) {
         console.log("Encryption enabled, fetching available recipients");
+        recipientSelect.required = true;  // Make recipient selection required
         try {
             await fetchPublicKeys();
             console.log("Public keys fetch completed");
         } catch (error) {
             console.error("Error during public key fetch:", error);
         }
+    } else {
+        recipientSelect.required = false;  // Make recipient selection optional
     }
 });
 
@@ -246,36 +299,34 @@ msgform.addEventListener("submit", (event) => {
     
     if (message.trim().length === 0) return;
     
-    let msg = { 
-        message,
+    // If encryption is checked but no recipient selected, show error
+    if (shouldEncrypt && !recipient) {
+        console.error("Encryption enabled but no recipient selected");
+        document.getElementById('keyFetchStatus').textContent = 'Please select a recipient for encryption';
+        document.getElementById('keyFetchStatus').className = 'status-message error';
+        return;
+    }
+    
+    let messageObject = {
+        message: message,
         encrypted: false
     };
     
-    if (shouldEncrypt && recipient && publicKeys[recipient]) {
+    if (shouldEncrypt && publicKeys[recipient]) {
         console.log("Encrypting message for recipient:", recipient);
-        console.log("Recipient's public key:", publicKeys[recipient]);
-        
         try {
-            // Create new instance for encryption
             const encryptor = new JSEncrypt();
             encryptor.setPublicKey(publicKeys[recipient]);
-            
-            // Verify the public key was set correctly
-            const pubKey = encryptor.getPublicKey();
-            if (!pubKey) {
-                throw new Error("Failed to set public key for encryption");
-            }
-            console.log("Verified public key was set:", pubKey);
             
             const encrypted = encryptor.encrypt(message);
             if (encrypted) {
                 console.log("Message encryption successful");
-                console.log("Original message:", message);
-                console.log("Encrypted message:", encrypted);
-                msg.message = encrypted;
-                msg.encrypted = true;
-                msg.recipient = recipient;
-                console.log("Final message object:", msg);
+                messageObject = {
+                    message: encrypted,
+                    encrypted: true,
+                    recipient: recipient
+                };
+                console.log("Sending encrypted message object:", messageObject);
             } else {
                 console.error("Message encryption failed");
                 document.getElementById('keyFetchStatus').textContent = 'Encryption failed';
@@ -290,8 +341,8 @@ msgform.addEventListener("submit", (event) => {
         }
     }
     
-    console.log("Sending message:", msg);
-    ws.send(JSON.stringify(msg));
+    console.log("Final message object being sent:", messageObject);
+    ws.send(JSON.stringify(messageObject));
     document.getElementById("messageinputBox").value = "";
 });
 

@@ -1,0 +1,30 @@
+.recipients-list {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 5px;
+} 
+
+.recipients-container {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: block !important;
+}
+
+.recipients-container h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1em;
+    color: #666;
+}
+
+.recipients-container label {
+    display: block;
+    margin: 5px 0;
+    cursor: pointer;
+}
+
+.recipients-container input[type="checkbox"] {
+    margin-right: 8px;
+} 

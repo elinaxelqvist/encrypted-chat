@@ -8,11 +8,48 @@ const server = http.createServer((req, res) => {
 });
 
 const wss = new ws.WebSocketServer({ server });
+
+// Function to get all connected users
+function getConnectedUsers() {
+  const users = [];
+  wss.clients.forEach(client => {
+    if (client.username) {
+      users.push({
+        username: client.username,
+        color: client.color
+      });
+    }
+  });
+  return users;
+}
+
+// Function to broadcast user list
+function broadcastUserList() {
+  const userList = getConnectedUsers();
+  const message = JSON.stringify({
+    type: 'userList',
+    users: userList
+  });
+  broadcast(message);
+}
+
 wss.on("connection", (client) => {
   console.log("Client connected!");
   client.on("message", (json) => {
-	console.log("Message: " + json);
+    console.log("Server received raw message:", json.toString());
     let msg = JSON.parse(json);
+    console.log("Server parsed message:", msg);
+    
+    if (msg.type === 'requestUserList') {
+      // Send current user list to the requesting client
+      const userList = JSON.stringify({
+        type: 'userList',
+        users: getConnectedUsers()
+      });
+      client.send(userList);
+      return;
+    }
+    
     if (msg.hasOwnProperty("username")) {
       if (msg.username.trim().length == 0) {
         client.username = "user_" + ++count;
@@ -20,32 +57,37 @@ wss.on("connection", (client) => {
         client.username = msg.username;
       }
       client.color = getDarkColor();
-      broadcast(
-        `{"user": "Server", "message":"${client.username} has entered the chat!"}`
-      );
+      broadcast(JSON.stringify({
+        username: "Server",
+        message: `${client.username} has entered the chat!`,
+        color: "#000000"
+      }));
+      broadcastUserList();
     } else {
-      // Kontrollera om meddelandet är tomt eller bara innehåller mellanslag
       if (!msg.message || msg.message.trim().length === 0) {
         return;
       }
       
-      // Hantera chattmeddelanden
-      const messageToSend = JSON.stringify({
+      const messageToSend = {
         username: client.username,
+        color: client.color,
         message: msg.message,
-        color: client.color
-      });
-      broadcast(messageToSend);
+        encrypted: Boolean(msg.encrypted),
+        recipient: msg.recipient
+      };
+      
+      console.log("Server broadcasting message:", messageToSend);
+      broadcast(JSON.stringify(messageToSend));
     }
   });
+
   client.on("close", () => {
-    broadcast(
-      `{"user": "Server", "message":"${client.username} has left the chat!"}`
-    );
-    console.log(
-      (Object.is(client.username, undefined) ? "Client" : client.username) +
-        " disconnected."
-    );
+    broadcast(JSON.stringify({
+      username: "Server",
+      message: `${client.username} has left the chat!`,
+      color: "#000000"
+    }));
+    broadcastUserList();
   });
 });
 
@@ -56,6 +98,7 @@ function broadcast(msg) {
     }
   }
 }
+
 function getDarkColor() {
   var color = '#';
   for (var i = 0; i < 6; i++) {
