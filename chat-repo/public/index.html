@@ -5,7 +5,8 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="index.css">
-	<title>Tiny ws chat</title>
+	<link rel="icon" type="image/x-icon" href="favicon.ico">
+	<title>Chat repo</title>
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script src="./js/jsencrypt.min.js"></script>
 	<script src="./js/script.js" defer></script>
@@ -13,19 +14,22 @@
 
 <body>
 	<div class="container">
+		<h1>Welcome<br>Enter the chat:</h1>
 		<div id="set_username">
 			<form id="userForm" class="msgForm">
-				<input type="text" placeholder="Username" class="input" id="userinputBox" />
+				<div>
+					<input type="text" placeholder="username" class="input" id="userinputBox">
+					<button>Register</button>
+				</div>
 				<textarea placeholder="Your Private Key (optional)" class="input" id="privateKeyInput"></textarea>
 				<div id="keyStatus" class="status-message"></div>
-				<input type="submit" class="btn" value="Register">
 			</form>
 		</div>
 		<div id="chat">
 			<p class="msg">Messages:</p>
 			<div id="messages" class="messages"></div>
 			<div id="recipients-container" class="recipients-container">
-				<h3>Available Recipients</h3>
+				<h3>Choose from available recipients in the scroll down</h3>
 			</div>
 			<div id="encryption-controls">
 				<select id="recipientSelect" class="input">
@@ -38,8 +42,8 @@
 			</div>
 			<form id="msgForm" class="msgForm">
 				<input type="text" placeholder="Send message" class="input" id="messageinputBox" />
-				<input type="submit" class="btn" value="Send">
-				<button type="reset" class="btn">Leave chat</button>
+				<button type="submit">Send</button>
+				<button type="reset">Leave chat</button>
 			</form>
 		</div>
 	</div>

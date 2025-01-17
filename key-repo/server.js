@@ -11,7 +11,7 @@ console.log("Starting key repository server...");
 app.use(cors({
     origin: '*'
 }));
-app.use(express.static('static'));    // makes the files in /static folder available
+app.use(express.static('static'));
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json());                        
 app.use(morgan('dev'));                            
@@ -27,18 +27,17 @@ let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREA
   console.log("Successfully connected to database");
 });
 
-var port = process.argv[2] || 8888;
-// HTTP SERVER
+var port = process.argv[2] || 8081;
+
 app.listen(port, function () {
   console.log('Key repository server listening on port ' + port + '!')
 });
 
-// HOME PAGE
 app.get('/', function (request, response) {
   response.sendFile(__dirname + '/index.html');
 });
 
-// Skapa tabellen när servern startar
+
 db.run(`CREATE TABLE IF NOT EXISTS pubkeys (
   username TEXT PRIMARY KEY,
   pubkey TEXT NOT NULL
@@ -50,8 +49,6 @@ db.run(`CREATE TABLE IF NOT EXISTS pubkeys (
       console.log("Database table 'pubkeys' is ready");
   }
 });
-
-// API ENDPOINTS
 
 app.get('/api/pubkeys', function (request, response) {
     console.log("GET /api/pubkeys - Fetching all public keys");

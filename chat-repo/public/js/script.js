@@ -1,5 +1,5 @@
 const ws = new WebSocket(`ws://${window.document.location.host}`);
-const KEY_SERVER = 'http://localhost:8081'; // Key server port
+const KEY_SERVER = 'http://localhost:8081';
 let crypt = new JSEncrypt();
 let privateKey = null;
 let publicKeys = {};
@@ -7,7 +7,6 @@ let publicKeys = {};
 console.log("Chat application starting...");
 console.log("Connecting to key server at:", KEY_SERVER);
 
-// Function to register public key with the key server
 async function registerPublicKey(username, publicKey) {
     try {
         console.log("Registering public key for user:", username);
@@ -36,68 +35,48 @@ async function registerPublicKey(username, publicKey) {
     }
 }
 
-// Function to fetch public keys from the key server
 async function fetchPublicKeys() {
     try {
         const url = `${KEY_SERVER}/api/pubkeys`;
-        console.log("Fetching public keys from:", url);
         const response = await fetch(url);
         
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Server response not OK:', response.status, errorText);
-            throw new Error(`Failed to fetch public keys: ${response.status} ${errorText}`);
+            throw new Error(`Failed to fetch public keys: ${response.status}`);
         }
         
         const keys = await response.json();
-        console.log("Received keys from server:", keys);
-        
         const select = document.getElementById('recipientSelect');
-        if (!select) {
-            console.error("Could not find recipientSelect element");
-            return;
-        }
+        const selectedValue = select.value;
         
         select.innerHTML = '<option value="">Select recipient (for encryption)</option>';
         
         if (keys && Array.isArray(keys)) {
-            console.log(`Processing ${keys.length} public keys, my username is: ${myUsername}`);
-            let addedCount = 0;
-            
             keys.forEach(key => {
                 if (key.username !== myUsername) {
-                    console.log(`Adding key for ${key.username}:`, key.pubkey);
                     publicKeys[key.username] = key.pubkey;
                     const option = document.createElement('option');
                     option.value = key.username;
                     option.textContent = key.username;
                     select.appendChild(option);
-                    addedCount++;
                 }
             });
             
-            console.log("Public keys stored:", publicKeys);
-            console.log(`Added ${addedCount} recipients to dropdown`);
-            document.getElementById('keyFetchStatus').textContent = 
-                `Recipients loaded (${addedCount} available)`;
-            document.getElementById('keyFetchStatus').className = 'status-message success';
-        } else {
-            console.error("Unexpected response format from key server:", keys);
-            throw new Error('Invalid response format from key server');
+            if (selectedValue && publicKeys[selectedValue]) {
+                select.value = selectedValue;
+            }
         }
     } catch (error) {
         console.error('Error fetching public keys:', error);
-        document.getElementById('keyFetchStatus').textContent = 'Failed to load recipients: ' + error.message;
-        document.getElementById('keyFetchStatus').className = 'status-message error';
+        showError('Could not connect to key server. Encrypted messages will not work.');
+        document.getElementById('encryptMessage').disabled = true;
         throw error;
     }
 }
 
-// Function to normalize key format
 function normalizeKey(key) {
     return key
-        .replace(/\r\n/g, '\n')  // Normalize line endings
-        .replace(/----$/, '-----')  // Fix header/footer with 4 dashes
+        .replace(/\r\n/g, '\n')
+        .replace(/----$/, '-----')
         .trim();
 }
 
@@ -112,49 +91,24 @@ ws.onclose = function () {
 ws.onmessage = function (message) {
     console.log("Received WebSocket message:", message.data);
     
-    // Create message div first
     const msgDiv = document.createElement("div");
     msgDiv.classList.add("msgCtn");
     
     const json = JSON.parse(message.data);
     console.log("Parsed message:", json);
 
-    // Handle user list updates from WebSocket
     if (json.type === 'userList') {
         console.log("Received updated user list:", json.users);
-        // Update both the checkbox list and dropdown
-        updateRecipientsList(json.users);
         
-        // Also fetch updated public keys when user list changes
         fetchPublicKeys().then(() => {
             console.log("Public keys updated after user list change");
-            // Update the dropdown with all available recipients
-            const select = document.getElementById('recipientSelect');
-            const selectedValue = select.value; // Save current selection
-            
-            select.innerHTML = '<option value="">Select recipient (for encryption)</option>';
-            Object.keys(publicKeys).forEach(username => {
-                if (username !== myUsername) {  // Don't add ourselves
-                    const option = document.createElement('option');
-                    option.value = username;
-                    option.textContent = username;
-                    select.appendChild(option);
-                }
-            });
-            
-            // Restore previous selection if still valid
-            if (selectedValue && publicKeys[selectedValue]) {
-                select.value = selectedValue;
-            }
         }).catch(error => {
             console.error("Error updating public keys:", error);
         });
         return;
     }
 
-    // Try to decrypt if message is explicitly marked as encrypted and we have a private key
     let displayMessage = json.message;
-    // Only treat as encrypted if explicitly marked as encrypted
     const isEncrypted = json.encrypted === true;
     
     if (isEncrypted && privateKey) {
@@ -169,18 +123,18 @@ ws.onmessage = function (message) {
             
             if (decrypted) {
                 console.log("Message decryption successful:", decrypted);
-                displayMessage = decrypted + ' 🔓';
+                displayMessage = decrypted;
             } else {
                 console.log("Message decryption failed - message not for us");
-                displayMessage = '[Encrypted message - not for you]';
+                displayMessage = '[Encrypted message]';
             }
         } catch (error) {
             console.error("Message decryption error:", error);
-            displayMessage = '[Encrypted message - decryption failed]';
+            displayMessage = '[Encrypted message]';
         }
     } else if (isEncrypted) {
         console.log("Encrypted message received but no private key available");
-        displayMessage = '[Encrypted message - no private key]';
+        displayMessage = '[Encrypted message]';
     } else {
         console.log("Regular unencrypted message received");
     }
@@ -200,15 +154,13 @@ const chat_div = document.getElementById("chat");
 const userform = document.getElementById("userForm");
 const msgform = document.getElementById("msgForm");
 
-// Store our own username when we join
 let myUsername = '';
 
 userform.addEventListener('submit', async function(e) {
     e.preventDefault();
     const username = document.getElementById('userinputBox').value;
-    myUsername = username;  // Store username
+    myUsername = username;
     
-    // Store private key if provided
     const keyInput = document.getElementById('privateKeyInput').value;
     if (keyInput.trim()) {
         console.log("Private key provided, normalizing and storing");
@@ -219,14 +171,11 @@ userform.addEventListener('submit', async function(e) {
         privateKey = null;
     }
     
-    // Send username to server
     ws.send(JSON.stringify({ username: username }));
     
-    // Hide registration form and show chat
     document.getElementById('set_username').style.display = 'none';
     document.getElementById('chat').style.display = 'block';
     
-    // Fetch public keys immediately after registration
     try {
         console.log("Fetching public keys after registration");
         const url = `${KEY_SERVER}/api/pubkeys`;
@@ -243,7 +192,6 @@ userform.addEventListener('submit', async function(e) {
             });
         }
         
-        // Update the UI
         const select = document.getElementById('recipientSelect');
         select.innerHTML = '<option value="">Select recipient (for encryption)</option>';
         Object.keys(publicKeys).forEach(username => {
@@ -258,39 +206,44 @@ userform.addEventListener('submit', async function(e) {
     }
 });
 
-// Add event listener for the encrypt checkbox
 document.getElementById('encryptMessage').addEventListener('change', async (event) => {
     const recipientSelect = document.getElementById('recipientSelect');
+    const selectedRecipient = recipientSelect.value;
     console.log("Encryption checkbox changed, checked:", event.target.checked);
     
     if (event.target.checked) {
         console.log("Encryption enabled, fetching available recipients");
-        recipientSelect.required = true;  // Make recipient selection required
+        recipientSelect.required = true;
         try {
             await fetchPublicKeys();
-            console.log("Public keys fetch completed");
+            
+            if (selectedRecipient) {
+                recipientSelect.value = selectedRecipient;
+            }
         } catch (error) {
             console.error("Error during public key fetch:", error);
         }
     } else {
-        recipientSelect.required = false;  // Make recipient selection optional
+        recipientSelect.required = false;
     }
 });
 
-// Add event listener for recipient selection
 document.getElementById('recipientSelect').addEventListener('change', async (event) => {
     const recipient = event.target.value;
     if (recipient) {
         console.log("Recipient selected:", recipient);
-        if (!publicKeys[recipient]) {
-            console.log("Fetching public key for recipient:", recipient);
-            await fetchPublicKeys();
-        }
     }
 });
 
 msgform.addEventListener("submit", (event) => {
     event.preventDefault();
+    
+    if (ws.readyState !== WebSocket.OPEN) {
+        console.error('WebSocket is not connected. State:', ws.readyState);
+        showError('Cannot send message: Connection to server lost. Please refresh the page.');
+        return;
+    }
+
     const message = document.getElementById("messageinputBox").value;
     const shouldEncrypt = document.getElementById("encryptMessage").checked;
     const recipient = document.getElementById("recipientSelect").value;
@@ -299,7 +252,6 @@ msgform.addEventListener("submit", (event) => {
     
     if (message.trim().length === 0) return;
     
-    // If encryption is checked but no recipient selected, show error
     if (shouldEncrypt && !recipient) {
         console.error("Encryption enabled but no recipient selected");
         document.getElementById('keyFetchStatus').textContent = 'Please select a recipient for encryption';
@@ -350,3 +302,24 @@ msgform.addEventListener("reset", (event) => {
     console.log("User leaving chat");
     ws.close();
 });
+
+ws.onerror = function(error) {
+    console.error('WebSocket error:', error);
+    showError('Connection error occurred. Please refresh the page.');
+};
+
+function showError(message) {
+    let errorDiv = document.getElementById('error-message');
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'error-message';
+        document.querySelector('.container').insertBefore(errorDiv, document.querySelector('#chat'));
+    }
+    
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    
+    setTimeout(() => {
+        errorDiv.style.display = 'none';
+    }, 5000);
+}

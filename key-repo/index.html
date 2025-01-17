@@ -2,7 +2,7 @@
 
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<title>Key repository</title>
+	<title>Key repo</title>
 	<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
 	<script src="jsencrypt.min.js"></script>
 	<script type="text/javascript">
@@ -12,16 +12,13 @@
 			userName = $("#userName").val();
 			publicKey = $("#publicKey").val();
 			
-			// construct an object to be sent to the server
 			payload = { 
 				user: userName,
 				pubkey: publicKey 
 			};
 			
-			// Log the request
 			logRequest(payload);
 			
-			// make a POST request to /api/pubkeys
 			$.post('/api/pubkeys', payload)
 				.done(function(result) {
 					console.log(result);
@@ -55,58 +52,29 @@
 			document.getElementById('publicKey').value = crypt.getPublicKey();
 		}
 
-		function fetchUsers() {
-			$.get('/api/pubkeys')
-				.done(function(users) {
-					const userList = document.getElementById('userList');
-					userList.innerHTML = '';
-					users.forEach(function(user) {
-						userList.innerHTML += `
-							<div class="user-item">
-								<span class="username">${user.user}</span>
-							</div>
-						`;
-					});
-				})
-				.fail(function(error) {
-					console.log(error);
-					logRequest({ error: "Failed to fetch users" });
-				});
-		}
-
-		// Fetch users when page loads and every 5 seconds
-		$(document).ready(function() {
-			fetchUsers();
-			setInterval(fetchUsers, 5000);
-		});
-
 	</script>
 	<style>
 		body {
-			font-family: 'Poppins', sans-serif;
+			font-family: Arial, sans-serif;
 			min-height: 100vh;
 			margin: 0;
 			padding: 0;
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			/* Enkel statisk gradient */
-			background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+			background: #e8f5e9;
 		}
 
 		.container {
-			backdrop-filter: blur(10px);  /* Frostat glas-effekt */
-			background: rgba(255, 255, 255, 0.7);
 			padding: 30px;
 			border-radius: 20px;
-			box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-			width: 800px;  /* Fast bredd */
-			margin: 40px;  /* Marginal runt containern */
+			width: 800px;
+			margin: 40px;
 			text-align: center;
 		}
 
 		h1 {
-			color: #1b5e20;  /* Mörkare grön */
+			color: #1b5e20;
 			padding-bottom: 5px;
 			margin-top: 25px;
 			margin-bottom: 10px;
@@ -116,60 +84,63 @@
 			text-align: center;
 		}
 
-		/* Gemensamma stilar för input och textarea */
 		input, textarea {
 			margin: 10px 0;
 			border: none;
 			border-radius: 12px;
-			box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-			transition: all 0.3s ease;
 			color: #1b5e20;
 			background-color: white;
+			outline: none;
 		}
 
-		/* Specifika stilar för input */
 		input {
 			padding: 15px;
 		}
 
-		/* Specifika stilar för textarea */
-		textarea {
-			width: 300px;
-			padding: 20px 25px 20px 20px;  /* top right bottom left */
-			resize: none;
-			overflow-y: auto;
+		input[type="text"] {
+			width: 150px;
+			margin-right: 20px;
 		}
 
-		input:focus, textarea:focus {
-			outline: 2px solid #1b5e20;  /* Mörkgrön ram vid fokus */
-			outline-offset: -1px;  /* Gör så att outline sitter tätt mot elementet */
-			box-shadow: 0 15px 40px rgba(27, 94, 32, 0.15);  /* Grön skugga vid fokus */
+		textarea {
+			width: 300px;
+			padding: 20px 25px 20px 20px;
+			resize: none;
+			overflow-y: auto;
+			
+			&::-webkit-scrollbar {
+				width: 12px;
+				background-color: transparent;
+			}
+			
+			&::-webkit-scrollbar-thumb {
+				background-color: #464b47;
+				border-radius: 20px;
+				border: 4px solid white;
+			}
+			
+			&::-webkit-scrollbar-track {
+				background: transparent;
+				border-radius: 0 12px 12px 0;
+			}
 		}
 
 		button {
-			background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);  /* Gradient knappar */
+			background: #1b5e20;
 			color: white;
 			border: none;
-			padding: 15px 20px;  /* Justerad padding för att matcha input */
+			padding: 15px 20px;
 			border-radius: 12px;
 			cursor: pointer;
-			transition: all 0.3s ease;
 			font-weight: 500;
 			letter-spacing: 0.5px;
-			box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-			width: 150px;  /* Fast bredd som matchar input */
-		}
-
-		button:hover {
-			transform: translateY(-4px) scale(1.02);  /* Lite större vid hover */
-			box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+			width: 150px;
 		}
 
 		#messagesTable {
 			background: rgba(255, 255, 255, 0.9);
 			border-radius: 12px;
 			padding: 15px;
-			box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
 			width: 600px;
 			margin: 20px auto;
 			max-height: 200px;
@@ -181,26 +152,7 @@
 			padding: 12px;
 			border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 			font-size: 14px;
-			color: #1b5e20;  /* Samma mörkgröna */
-		}
-
-		/* Animera in nya meddelanden */
-		@keyframes fadeIn {
-			from { opacity: 0; transform: translateY(10px); }
-			to { opacity: 1; transform: translateY(0); }
-		}
-
-		#messagesTable tr {
-			animation: fadeIn 0.3s ease-out forwards;
-		}
-
-		/* Snygga till ikonen */
-		.fa-key {
 			color: #1b5e20;
-			font-size: 48px;
-			margin-bottom: 20px;
-			display: block;
-			text-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 		}
 
 		.key-fields {
@@ -210,72 +162,16 @@
 			margin: 20px 0 40px 0;
 		}
 
-		/* Scrollbar styling */
-		textarea::-webkit-scrollbar {
-			width: 12px;  /* Smalare scrollbar */
-			background-color: transparent;  /* Transparent bakgrund */
-		}
-
-		textarea::-webkit-scrollbar-thumb {
-			background-color: #4caf50;
-			border-radius: 20px;  /* Rundad scrollbar */
-			border: 4px solid white;  /* Vit kant runt scrollbaren */
-		}
-
-		textarea::-webkit-scrollbar-track {
-			background: transparent;  /* Transparent track */
-			border-radius: 0 12px 12px 0;  /* Runda hörn på track */
-		}
-
-		textarea:focus {
-			border-radius: 12px !important;  /* Behåll rundade hörn även vid fokus */
-		}
-
-		input[type="text"] {
-			width: 150px;
-			margin-right: 20px;  /* Lägg till margin mellan input och knapp */
-		}
-
-		/* Även placeholder-texten kan få en ljusare grön nyans */
 		input::placeholder, textarea::placeholder {
-			color: #1b5e20;  /* Samma mörkgröna som övrig text */
-			opacity: 0.5;    /* Lite transparent för att skilja från inmatad text */
-		}
-
-		/* Styles for user list */
-		#userList {
-			background: rgba(255, 255, 255, 0.9);
-			border-radius: 12px;
-			padding: 15px;
-			box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-			width: 600px;
-			margin: 20px auto;
-			max-height: 300px;
-			overflow-y: auto;
-		}
-
-		.user-item {
-			padding: 10px;
-			border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-		}
-
-		.user-item:last-child {
-			border-bottom: none;
-		}
-
-		.username {
-			font-weight: 500;
 			color: #1b5e20;
-			font-size: 16px;
+			opacity: 0.5;
 		}
 	</style>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
 	<div class="container">
-		<i class="fas fa-key"></i>
 		<h1>Register username and public key</h1>
 		<div>
 			<input id="userName" type="text" placeholder="username">
@@ -287,11 +183,8 @@
 		</div>
 		<button onclick="sendRegData();" class="send-button">Send</button>
 
-		<h1>Request log:</h1>
+		<h1>Request log</h1>
 		<table id="messagesTable"></table>
-
-		<h1>Available Recipients:</h1>
-		<div id="userList"></div>
 	</div>
 </body>
 
